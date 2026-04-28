@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🪐 Математический маятник</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.98);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        h1 { font-size: 1.8rem; color: #1a1a2e; margin-bottom: 0.5rem; }
+        .subtitle { color: #666; font-size: 1.1rem; }
+        .formula-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 1.2rem 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            font-family: monospace;
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+        .formula-box strong { display: block; margin-bottom: 0.5rem; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.2rem;
+            margin: 1.5rem 0;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #444;
+            font-size: 0.95rem;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fafafa;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.2);
+        }
+        .hint { font-size: 0.8rem; color: #777; margin-top: 0.3rem; }
+        .error {
+            background: #ffe6e6;
+            color: #c00;
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            border-left: 4px solid #f44;
+            font-weight: 500;
+        }
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+            margin-top: 0.5rem;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102,126,234,0.4);
+        }
+        .planet-banner {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #1976d2;
+        }
+        .planet-banner .g-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1976d2;
+        }
+        .results {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 16px;
+            display: none;
+        }
+        .results.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.9rem 0;
+            border-bottom: 1px dashed #ccc;
+        }
+        .result-row:last-child { border-bottom: none; }
+        .result-label { color: #555; font-weight: 500; }
+        .result-value {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.15rem;
+        }
+        .result-value.good { color: #2e7d32; }
+        .result-value.bad { color: #c62828; }
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 1.5rem; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>🪐 Математический маятник</h1>
+        <p class="subtitle">Определение ускорения свободного падения на планетах</p>
+    </header>
+
+    <div class="formula-box">
+        <strong>📐 Формулы:</strong>
+        T = t / N &nbsp;&nbsp;|&nbsp;&nbsp;
+        g = 4π²L / T² &nbsp;&nbsp;|&nbsp;&nbsp;
+        T₀ = 2π√(L/g) &nbsp;&nbsp;|&nbsp;&nbsp;
+        ν = 1/T
+    </div>
+
+    <form th:action="@{/calculate}" th:object="${form}" method="post">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="planet">🌌 Планета:</label>
+                <select id="planet" th:field="*{planet}">
+                    <option th:each="p : ${planets}" th:value="${p}" th:text="${p}">🌍 Земля</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="length">📏 Длина L, м:</label>
+                <input type="number" id="length" step="0.01" min="0.01"
+                       th:field="*{length}" required placeholder="1.00">
+                <span class="hint">Оптимально: 0.5–2.0 м</span>
+            </div>
+
+            <div class="form-group">
+                <label for="timeTotal">⏱ Время t, с:</label>
+                <input type="number" id="timeTotal" step="0.01" min="0.01"
+                       th:field="*{timeTotal}" required placeholder="20.00">
+            </div>
+
+            <div class="form-group">
+                <label for="oscillations">🔄 Колебаний N:</label>
+                <input type="number" id="oscillations" min="1" max="100"
+                       th:field="*{oscillations}" required placeholder="10">
+                <span class="hint">Рекомендуется 10–50</span>
+            </div>
+
+            <div class="form-group">
+                <label for="angle">📐 Угол α, °:</label>
+                <input type="number" id="angle" step="0.1" min="0" max="30"
+                       th:field="*{angle}" placeholder="5">
+                <span class="hint">Опционально, &lt;30°</span>
+            </div>
+        </div>
+
+        <div th:if="${form.error}" class="error" th:text="${form.error}"></div>
+        <button type="submit">🔬 Рассчитать</button>
+    </form>
+
+    <div class="planet-banner" th:if="${form.gValue != null}">
+        <span>g на <strong th:text="${form.planet}">🌍 Земле</strong>:</span>
+        <span class="g-value" th:text="${#numbers.formatDecimal(form.gValue, 1, 2)} + ' м/с²'">9.81 м/с²</span>
+    </div>
+
+    <div class="results" th:classappend="${form.period != null} ? 'show'">
+        <h3 style="margin-bottom: 1rem; color: #1a1a2e;">📊 Результаты</h3>
+
+        <div class="result-row">
+            <span class="result-label">Период (эксп.) T:</span>
+            <span class="result-value" th:text="${#numbers.formatDecimal(form.period, 1, 3)} + ' с'">—</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">Период (теор.) T₀:</span>
+            <span class="result-value" th:text="${#numbers.formatDecimal(form.theoreticalPeriod, 1, 3)} + ' с'">—</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">Частота ν:</span>
+            <span class="result-value" th:text="${#numbers.formatDecimal(form.frequency, 1, 3)} + ' Гц'">—</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">g (расчёт):</span>
+            <span class="result-value" th:text="${#numbers.formatDecimal(form.gCalculated, 1, 3)} + ' м/с²'">—</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">Погрешность:</span>
+            <span class="result-value"
+                  th:classappend="${form.gError < 5} ? 'good' : 'bad'"
+                  th:text="${#numbers.formatDecimal(form.gError, 1, 2)} + '%'">—</span>
+        </div>
+    </div>
+
+    <footer>
+        <p>🔬 Лабораторная работа по физике</p>
+        <p>Проект buhaev2 © 2026</p>
+    </footer>
+</div>
+<script th:src="@{/js/pendulum.js}"></script>
+</body>
+</html>
