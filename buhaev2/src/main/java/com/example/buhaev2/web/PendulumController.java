@@ -13,7 +13,7 @@ public class PendulumController {
     @GetMapping("/")
     public String index(Model model) {
         PendulumForm form = new PendulumForm();
-        form.setPlanet("🌍 Земля");
+        form.setPlanet("Земля");
         form.setLength(1.0);
         form.setOscillations(10);
 

@@ -70,6 +70,30 @@
             box-shadow: 0 0 0 3px rgba(102,126,234,0.2);
         }
         .hint { font-size: 0.8rem; color: #777; margin-top: 0.3rem; }
+        /* Поля погрешностей */
+        input[type="number"][id*="Error"] {
+            background: #f0f7ff;
+            border-color: #93c5fd;
+        }
+        input[type="number"][id*="Error"]:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .result-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            text-align: center;
+        }
+        .result-error {
+            font-size: 0.8rem;
+            color: #dc2626;
+            font-weight: 500;
+            margin-top: 0.2rem;
+        }
+        .result-deviation.good { color: #16a34a; }
+        .result-deviation.bad { color: #dc2628; }
         .error {
             background: #ffe6e6;
             color: #c00;
@@ -186,10 +210,26 @@
                 <span class="hint">Оптимально: 0.5–2.0 м</span>
             </div>
 
+            <!-- Погрешность длины -->
+            <div class="form-group">
+                <label for="lengthError">± ΔL, м:</label>
+                <input type="number" id="lengthError" step="0.001" min="0" max="0.1"
+                       th:field="*{lengthError}" placeholder="0.001" value="0.001">
+                <span class="hint">Погрешность измерения длины</span>
+            </div>ц
+
             <div class="form-group">
                 <label for="timeTotal">⏱ Время t, с:</label>
                 <input type="number" id="timeTotal" step="0.01" min="0.01"
                        th:field="*{timeTotal}" required placeholder="20.00">
+            </div>
+
+            <!-- Погрешность времени -->
+            <div class="form-group">
+                <label for="timeError">± Δt, с:</label>
+                <input type="number" id="timeError" step="0.01" min="0" max="1"
+                       th:field="*{timeError}" placeholder="0.1" value="0.1">
+                <span class="hint">Погрешность секундомера</span>
             </div>
 
             <div class="form-group">
@@ -205,6 +245,14 @@
                        th:field="*{angle}" placeholder="5">
                 <span class="hint">Опционально, &lt;30°</span>
             </div>
+
+            <!-- Погрешность угла -->
+            <div class="form-group">
+                <label for="angleError">± Δα, °:</label>
+                <input type="number" id="angleError" step="0.1" min="0" max="10"
+                       th:field="*{angleError}" placeholder="1" value="1">
+                <span class="hint">Погрешность установки угла</span>
+            </div>
         </div>
 
         <div th:if="${form.error}" class="error" th:text="${form.error}"></div>
@@ -216,30 +264,130 @@
         <span class="g-value" th:text="${#numbers.formatDecimal(form.gValue, 1, 2)} + ' м/с²'">9.81 м/с²</span>
     </div>
 
+    <!-- Анимация маятника -->
+    <div th:if="${form.length != null and form.length > 0}" class="animation-section" style="margin: 1.5rem 0;">
+        <div style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 1.5rem; border-radius: 16px; text-align: center;">
+            <h4 style="margin: 0 0 1rem 0; color: #1a1a2e;">🔬 Визуализация маятника</h4>
+            <canvas
+                    id="pendulum-canvas"
+                    width="400"
+                    height="280"
+                    th:data-g="${form.gValue}"
+                    th:data-length="${form.length}"
+                    th:data-angle="${form.angle}"
+                    style="background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
+            ></canvas>
+            <p style="margin: 0.8rem 0 0 0; font-size: 0.85rem; color: #666;">
+                L = <span th:text="${form.length} + ' м'"></span> |
+                <span th:text="${form.planet}"></span> |
+                g = <span th:text="${#numbers.formatDecimal(form.gValue, 1, 2)}"></span> м/с²
+            </p>
+        </div>
+    </div>
+
     <div class="results" th:classappend="${form.period != null} ? 'show'">
         <h3 style="margin-bottom: 1rem; color: #1a1a2e;">📊 Результаты</h3>
 
-        <div class="result-row">
-            <span class="result-label">Период (эксп.) T:</span>
-            <span class="result-value" th:text="${#numbers.formatDecimal(form.period, 1, 3)} + ' с'">—</span>
+        <!-- Главный результат: g с погрешностью -->
+        <div style="background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white; padding: 1.2rem; border-radius: 12px;
+                margin-bottom: 1.5rem; text-align: center;">
+            <div style="font-size: 0.9rem; opacity: 0.9;">Ускорение свободного падения</div>
+            <div style="font-size: 1.8rem; font-weight: 700; margin: 0.5rem 0;">
+            <span th:if="${form.gCalculated != null}"
+                  th:text="'(' + ${#numbers.formatDecimal(form.gCalculated, 1, 3)} + ' ± ' +
+                          ${#numbers.formatDecimal(form.gAbsoluteError != null ? form.gAbsoluteError : 0, 1, 3)} + ') м/с²'">
+                (9.81 ± 0.12) м/с²
+            </span>
+                <span th:unless="${form.gCalculated != null}">—</span>
+            </div>
+            <div style="font-size: 0.85rem; opacity: 0.95;">
+                Относит. погрешность:
+                <strong th:if="${form.gRelativeError != null}"
+                        th:text="${#numbers.formatDecimal(form.gRelativeError, 1, 2)} + '%'">—</strong>
+                <span th:unless="${form.gRelativeError != null}">—</span>
+            </div>
         </div>
-        <div class="result-row">
-            <span class="result-label">Период (теор.) T₀:</span>
-            <span class="result-value" th:text="${#numbers.formatDecimal(form.theoreticalPeriod, 1, 3)} + ' с'">—</span>
+
+        <!-- Сетка результатов -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem;">
+
+            <!-- Период -->
+            <div class="result-card">
+                <div style="font-size: 0.85rem; color: #666;">Период T</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin: 0.3rem 0;"
+                     th:text="${form.period != null} ? ${#numbers.formatDecimal(form.period, 1, 3)} + ' с' : '—'">—</div>
+                <div class="result-error" th:if="${form.periodError != null}"
+                     th:text="'± ' + ${#numbers.formatDecimal(form.periodError, 1, 3)} + ' с'">—</div>
+            </div>
+
+            <!-- Частота -->
+            <div class="result-card">
+                <div style="font-size: 0.85rem; color: #666;">Частота ν</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin: 0.3rem 0;"
+                     th:text="${form.frequency != null} ? ${#numbers.formatDecimal(form.frequency, 1, 3)} + ' Гц' : '—'">—</div>
+                <div class="result-error" th:if="${form.frequencyError != null}"
+                     th:text="'± ' + ${#numbers.formatDecimal(form.frequencyError, 1, 3)} + ' Гц'">—</div>
+            </div>
+
+            <!-- Теоретический период -->
+            <div class="result-card">
+                <div style="font-size: 0.85rem; color: #666;">T₀ (теор.)</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin: 0.3rem 0;"
+                     th:text="${form.theoreticalPeriod != null} ? ${#numbers.formatDecimal(form.theoreticalPeriod, 1, 3)} + ' с' : '—'">—</div>
+                <div th:if="${form.periodDeviation != null}"
+                     th:class="${form.periodDeviation < 5} ? 'result-deviation good' : 'result-deviation bad'"
+                     th:style="'font-size: 0.8rem; margin-top: 0.2rem; ' + (${form.periodDeviation < 5} ? 'color: #16a34a;' : 'color: #dc2626;')"
+                     th:text="'откл. ' + ${#numbers.formatDecimal(form.periodDeviation, 1, 1)} + '%'">—</div>
+            </div>
+
+            <!-- g табличное -->
+            <div class="result-card">
+                <div style="font-size: 0.85rem; color: #666;">g (табл.)</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin: 0.3rem 0;"
+                     th:text="${form.gValue != null} ? ${#numbers.formatDecimal(form.gValue, 1, 2)} + ' м/с²' : '—'">—</div>
+                <div style="font-size: 0.8rem; color: #999;" th:text="${form.planet}">Земля</div>
+            </div>
+
+            <!-- Поправка на угол -->
+            <div class="result-card" th:if="${form.angle != null and form.angle > 0}">
+                <div style="font-size: 0.85rem; color: #666;">Поправка на угол</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin: 0.3rem 0;"
+                     th:text="${form.largeAngleCorrection != null} ? '× ' + ${#numbers.formatDecimal(form.largeAngleCorrection, 1, 4)} : '—'">—</div>
+                <div style="font-size: 0.8rem; color: #999;" th:text="'α = ' + ${form.angle} + '°'">—</div>
+            </div>
+
+            <!-- Оценка качества -->
+            <div class="result-card">
+                <div style="font-size: 0.85rem; color: #666;">Качество</div>
+                <div style="font-size: 1rem; font-weight: 600; color: #1a1a2e; margin: 0.3rem 0;"
+                     th:text="${form.qualityAssessment} ?: '—'">—</div>
+            </div>
         </div>
-        <div class="result-row">
-            <span class="result-label">Частота ν:</span>
-            <span class="result-value" th:text="${#numbers.formatDecimal(form.frequency, 1, 3)} + ' Гц'">—</span>
+
+        <!-- Доверительный интервал -->
+        <div th:if="${form.gConfidenceLow != null and form.gConfidenceHigh != null}"
+             style="margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem; border-left: 4px solid #667eea;">
+            <strong>Доверительный интервал (95%):</strong><br>
+            <span th:text="${#numbers.formatDecimal(form.gConfidenceLow, 1, 3)} + ' ≤ g ≤ ' + ${#numbers.formatDecimal(form.gConfidenceHigh, 1, 3)} + ' м/с²'">—</span>
         </div>
-        <div class="result-row">
-            <span class="result-label">g (расчёт):</span>
-            <span class="result-value" th:text="${#numbers.formatDecimal(form.gCalculated, 1, 3)} + ' м/с²'">—</span>
+
+        <!-- Согласованность -->
+        <div th:if="${form.gCalculated != null and form.gAbsoluteError != null}"
+             th:style="${form.gValue != null and form.gValue >= (form.gCalculated - 2*form.gAbsoluteError) and form.gValue <= (form.gCalculated + 2*form.gAbsoluteError)}
+                   ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'"
+             style="margin-top: 1rem; padding: 0.8rem; border-radius: 8px; font-weight: 500; text-align: center;">
+        <span th:if="${form.gValue != null and form.gValue >= (form.gCalculated - 2*form.gAbsoluteError) and form.gValue <= (form.gCalculated + 2*form.gAbsoluteError)}">
+            ✅ Табличное g попадает в доверительный интервал
+        </span>
+            <span th:unless="${form.gValue != null and form.gValue >= (form.gCalculated - 2*form.gAbsoluteError) and form.gValue <= (form.gCalculated + 2*form.gAbsoluteError)}">
+            ⚠️ Табличное g вне доверительного интервала
+        </span>
         </div>
-        <div class="result-row">
-            <span class="result-label">Погрешность:</span>
-            <span class="result-value"
-                  th:classappend="${form.gError < 5} ? 'good' : 'bad'"
-                  th:text="${#numbers.formatDecimal(form.gError, 1, 2)} + '%'">—</span>
+
+        <!-- Примечание -->
+        <div style="margin-top: 1rem; font-size: 0.8rem; color: #666; font-style: italic; text-align: center;">
+            💡 Погрешности: метод пропагации неопределённостей. Поправка на угол: ряд Тейлора до θ⁴.
         </div>
     </div>
 
