@@ -81,19 +81,9 @@
     <!-- Topics -->
     <div class="section-label">Для начала выберите тему</div>
 
+    <!-- ✅ Сетка карточек: заполняется ТОЛЬКО через JS (index.js) -->
     <div class="topics-grid" id="topics-grid">
-        <!-- ✅ СТАТИЧЕСКАЯ КАРТОЧКА: Маятник (если JS не загрузится) -->
-        <a th:href="@{/pendulum}" class="topic-card" style="text-decoration: none; color: inherit; display: block;">
-            <div class="topic-icon">🪐</div>
-            <h3 class="topic-title">Математический маятник</h3>
-            <p class="topic-desc">Определение ускорения свободного падения на планетах с учётом погрешностей</p>
-            <div class="topic-tags">
-                <span class="tag">механика</span>
-                <span class="tag">колебания</span>
-                <span class="tag">g</span>
-            </div>
-        </a>
-        <!-- Остальные карточки добавятся через JS -->
+        <!-- Карточки добавляются динамически из topics массива в index.js -->
     </div>
 </main>
 
