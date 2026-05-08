@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Законы Кирхгофа</title>
+    <link rel="stylesheet" th:href="@{/kirchhoff/style.css}"/>
+</head>
+<body>
+
+<!-- ══════════════════════════ HEADER ══════════════════════════ -->
+<header class="site-header">
+    <h1>⚡ Законы Кирхгофа</h1>
+    <p class="subtitle">Интерактивный калькулятор · Расчёт токов и погрешностей</p>
+</header>
+
+<!-- ══════════════════════════ TABS ════════════════════════════ -->
+<div class="tabs">
+    <button id="btn-first"  class="tab-btn" onclick="showTab('first')">I Закон — Токи</button>
+    <button id="btn-second" class="tab-btn" onclick="showTab('second')">II Закон — Напряжения</button>
+    <button id="btn-theory" class="tab-btn" onclick="showTab('theory')">📖 Теория</button>
+</div>
+
+<!-- ══════════════════════════ MAIN ════════════════════════════ -->
+<div class="container">
+
+    <!-- ╔══════════════════════════════════════════════════════════╗
+         ║  I ЗАКОН КИРХГОФА                                        ║
+         ╚══════════════════════════════════════════════════════════╝ -->
+    <div id="section-first" class="section-card">
+
+        <p class="card-title">Первый закон Кирхгофа</p>
+        <div class="law-formula">ΣI<sub>вх</sub> = ΣI<sub>вых</sub></div>
+        <p class="law-desc">
+            Сумма токов, втекающих в узел, равна сумме токов, вытекающих из него.
+            Три тока I₁, I₂, I₃ входят в узел A — найти вытекающий ток I<sub>вых</sub>.
+        </p>
+
+        <!-- ─── Схема узла ─── -->
+        <!--
+          Узел A = (260, 170).
+          Три входящих провода, стрелки направлены К узлу.
+          Один вытекающий провод вниз со стрелкой ОТ узла.
+          Поля ввода — на концах проводов, не касаясь стрелок.
+        -->
+        <div class="diagram-wrap">
+            <svg width="520" height="310" viewBox="0 0 520 310">
+                <defs>
+                    <filter id="glow-a">
+                        <feGaussianBlur stdDeviation="4" result="b"/>
+                        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    <marker id="arr-cyan" viewBox="0 0 10 10" refX="9" refY="5"
+                            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                        <path d="M0,1 L9,5 L0,9 Z" fill="#29b6f6"/>
+                    </marker>
+                    <marker id="arr-yellow" viewBox="0 0 10 10" refX="9" refY="5"
+                            markerWidth="7" markerHeight="7" orient="auto">
+                        <path d="M0,1 L9,5 L0,9 Z" fill="#ffd740"/>
+                    </marker>
+                </defs>
+
+                <!-- Провода входящих токов: стрелка marker-end → к узлу -->
+                <!-- I1: (75,55) → (252,164) -->
+                <line x1="75" y1="65" x2="252" y2="163"
+                      stroke="#29b6f6" stroke-width="2.5" marker-end="url(#arr-cyan)"/>
+                <!-- I2: (445,55) → (268,164) -->
+                <line x1="445" y1="65" x2="268" y2="163"
+                      stroke="#29b6f6" stroke-width="2.5" marker-end="url(#arr-cyan)"/>
+                <!-- I3: (40,170) → (249,170) -->
+                <line x1="52" y1="170" x2="249" y2="170"
+                      stroke="#29b6f6" stroke-width="2.5" marker-end="url(#arr-cyan)"/>
+
+                <!-- Вытекающий ток: (260,179) → (260,280) -->
+                <line x1="260" y1="179" x2="260" y2="278"
+                      stroke="#ffd740" stroke-width="2.5" marker-end="url(#arr-yellow)"/>
+
+                <!-- Узел A -->
+                <circle cx="260" cy="170" r="8" fill="#29b6f6" filter="url(#glow-a)"/>
+                <text x="273" y="166" fill="#fff" font-size="15" font-weight="700"
+                      font-family="sans-serif">A</text>
+
+                <!-- Метки токов (между полем ввода и стрелкой) -->
+                <text x="128" y="100" fill="#29b6f6" font-size="13" font-family="monospace" font-weight="600">I₁</text>
+                <text x="366" y="100" fill="#29b6f6" font-size="13" font-family="monospace" font-weight="600">I₂</text>
+                <text x="112" y="162" fill="#29b6f6" font-size="13" font-family="monospace" font-weight="600">I₃</text>
+
+                <!-- Метка и живой результат I_вых -->
+                <text x="272" y="242" fill="#ffd740" font-size="13" font-family="monospace" font-weight="600">I<tspan font-size="10" dy="3">вых</tspan></text>
+                <text id="svg1-iout" x="272" y="262" fill="#ffd740" font-size="13"
+                      font-family="monospace" font-weight="700">= ?</text>
+
+                <!-- Поля ввода на концах проводов -->
+                <!-- I1 (верх-лево) -->
+                <foreignObject x="22" y="44" width="66" height="24">
+                    <body xmlns="http://www.w3.org/1999/xhtml">
+                    <input class="fo-input" id="fi-i1" type="number" step="any" placeholder="I₁, А"/>
+                    </body>
+                </foreignObject>
+                <!-- I2 (верх-право) -->
+                <foreignObject x="432" y="44" width="66" height="24">
+                    <body xmlns="http://www.w3.org/1999/xhtml">
+                    <input class="fo-input" id="fi-i2" type="number" step="any" placeholder="I₂, А"/>
+                    </body>
+                </foreignObject>
+                <!-- I3 (лево) -->
+                <foreignObject x="0" y="158" width="60" height="24">
+                    <body xmlns="http://www.w3.org/1999/xhtml">
+                    <input class="fo-input" id="fi-i3" type="number" step="any" placeholder="I₃, А"/>
+                    </body>
+                </foreignObject>
+            </svg>
+            <p class="diagram-hint">✎ Вводи значения прямо на схеме или в поля ниже</p>
+        </div>
+
+        <!-- ─── Форма ─── -->
+        <form method="post" th:action="@{/kirchhoff/calculate-first}" onsubmit="return prepareFirst()">
+            <input type="hidden" name="i1In"   id="h-i1"/>
+            <input type="hidden" name="i2In"   id="h-i2"/>
+            <input type="hidden" name="i3In"   id="h-i3"/>
+            <input type="hidden" name="deltaI" id="h-deltaI"/>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>I₁ — входящий 1 (А)</label>
+                    <input type="number" id="tb-i1" step="any" placeholder="напр. 2.5"
+                           th:value="${kirchhoff != null and firstResult != null ? kirchhoff.i1In : ''}"/>
+                </div>
+                <div class="form-group">
+                    <label>I₂ — входящий 2 (А)</label>
+                    <input type="number" id="tb-i2" step="any" placeholder="напр. 1.5"
+                           th:value="${kirchhoff != null and firstResult != null ? kirchhoff.i2In : ''}"/>
+                </div>
+                <div class="form-group">
+                    <label>I₃ — входящий 3 (А)</label>
+                    <input type="number" id="tb-i3" step="any" placeholder="напр. 0.8"
+                           th:value="${kirchhoff != null and firstResult != null ? kirchhoff.i3In : ''}"/>
+                </div>
+            </div>
+
+            <!-- Параметры погрешности -->
+            <div class="error-params">
+                <p class="error-params-title">⚙ Параметры погрешности прибора</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>ΔI — погрешность тока (А)</label>
+                        <input type="number" id="tb-deltaI" step="any" value="0.05" placeholder="0.05"/>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-calc">⚡ Рассчитать I_вых и погрешность</button>
+        </form>
+
+        <!-- ─── Результат ─── -->
+        <div id="first-result-box" class="result-box"
+             th:if="${firstResult != null and firstResult}">
+            <div class="result-header">📊 Результат — I Закон Кирхгофа</div>
+            <div class="result-cols">
+
+                <!-- Левая колонка: основной расчёт -->
+                <div class="result-col">
+                    <p class="result-col-title">Расчёт токов</p>
+                    <div class="result-row">
+                        <span class="result-label">I₁ (входящий)</span>
+                        <span class="result-value" th:text="${kirchhoff.i1In} + ' А'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">I₂ (входящий)</span>
+                        <span class="result-value" th:text="${kirchhoff.i2In} + ' А'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">I₃ (входящий)</span>
+                        <span class="result-value" th:text="${kirchhoff.i3In} + ' А'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">I_вых = ΣI_вх</span>
+                        <span class="result-value big"
+                              th:text="${kirchhoff.iOut} + ' А'"
+                              th:attr="data-val=${kirchhoff.iOut},data-unit=' А'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Закон выполнен</span>
+                        <span class="badge ok">✓ Да</span>
+                    </div>
+                </div>
+
+                <!-- Правая колонка: погрешность -->
+                <div class="result-col">
+                    <p class="result-col-title">Погрешность измерений</p>
+                    <div class="result-row">
+                        <span class="result-label">ΔI прибора</span>
+                        <span class="result-value orange"
+                              th:text="${error.deltaI} + ' А'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Формула</span>
+                        <span class="result-value orange">ΔI_вых = 3·ΔI</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Абс. погрешность ΔI_вых</span>
+                        <span class="result-value orange"
+                              th:text="'± ' + ${#numbers.formatDecimal(error.absErrorIOut,1,4)} + ' А'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Отн. погрешность δI_вых</span>
+                        <span class="result-value red"
+                              th:text="'± ' + ${#numbers.formatDecimal(error.relErrorIOut,1,2)} + ' %'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Результат с погрешностью</span>
+                        <span class="result-value orange"
+                              th:text="'(' + ${#numbers.formatDecimal(kirchhoff.iOut,1,3)} + ' ± '
+                        + ${#numbers.formatDecimal(error.absErrorIOut,1,4)} + ') А'"></span>
+                    </div>
+                </div>
+
+            </div>
+        </div><!-- /result-box -->
+
+    </div><!-- /section-first -->
+
+
+    <!-- ╔══════════════════════════════════════════════════════════╗
+         ║  II ЗАКОН КИРХГОФА                                       ║
+         ╚══════════════════════════════════════════════════════════╝ -->
+    <div id="section-second" class="section-card">
+        <p class="card-title">Второй закон Кирхгофа</p>
+        <div class="law-formula">E = I · R<sub>общ</sub> &nbsp;·&nbsp; U = I · R</div>
+        <p class="law-desc">
+            Схема: один источник ЭДС → параллельный блок R₁∥R₂ → последовательный резистор R₃.
+            Вводи R₁, R₂, R₃ и ЭДС — получишь R<sub>общ</sub>, полный ток и напряжение на каждом резисторе.
+        </p>
+
+        <!--
+          СХЕМА (точно по фото):
+          ┌──────── E ────────────────────────────┐
+          │  (вверху по центру, ток → вправо)    │
+          │                                       │
+          │         ┌── R₁ ──┐                   │
+          └── R₃ ───┤         ├─── (к источнику) ─┘
+                    └── R₂ ──┘
+
+          SVG-топология (слева направо, как на фото):
+          Верхняя шина: L(60,60) ──E── R(520,60)
+          Правая стойка: R(520,60) → R(520,300)
+          Нижняя шина: R(520,300) → узел B(310,300) → R3 → узел C(130,300) → L(60,300)
+          Левая стойка: L(60,300) → L(60,60)
+          Параллельный блок: B(310,300)─┬─R1─┬─(310,60 через верхнюю шину нет,
+                                         нет — параллельный блок идёт ВЕРТИКАЛЬНО
+          ─────────────────────────────────────────────────────────────
+          Точнее по фото:
+          • Источник — вверху горизонтально по центру
+          • От «+» источника идём вправо по верхней шине до правого угла
+          • Спускаемся вниз по правой стойке до узла B
+          • От B влево идёт параллельный блок (R1 сверху, R2 снизу) до узла A
+          • От A влево идёт R3 до левого угла
+          • Левый угол → вверх → «−» источника
+
+          Координаты:
+          Верхняя шина: y=70, x: 60..520
+          Нижняя шина:  y=300
+          Левая стойка: x=60,  y=70..300
+          Правая стойка: x=520, y=70..300
+          Источник E: x=220..340, y=70 (горизонтально, по центру вверху)
+          Узел B (правый узел параллельного блока): x=430, y=300
+          Узел A (левый узел параллельного блока):  x=200, y=300
+          R1: верхняя ветвь параллельного блока, y=255
+          R2: нижняя ветвь параллельного блока, y=310 — нет, блок горизонтальный
+          Параллельный блок горизонтальный: A(200,300)─R1(верх)─B(430,300) и A─R2(низ)─B
+          Чтобы обе ветви были видны, R1 идёт по y=260, R2 по y=340, соединяются в A и B
+          R3: от A(200,300) влево до (60,300) — горизонтально
+        -->
+
+        <div class="diagram-wrap">
+            <!--
+              Топология (точно по фото):
+
+              Внешний прямоугольник:
+                TL(50,50) ── E (центр вверху) ── TR(550,50)
+                TR(550,50) │ правая стойка │ BR(550,310)
+                BR(550,310) ── нижняя шина ── B(370,310) // правый узел парал.блока
+                B(370,310) // левый узел парал.блока // A(180,310)
+                A(180,310) ── R3 ── TL(50,310)
+                TL(50,310) │ левая стойка │ TL(50,50)
+
+              Параллельный блок B(370) ↔ A(180) — ДВЕ горизонтальные ветви:
+                Верхняя ветвь y=260: A(180,260)──[R1]──B(370,260)
+                Нижняя ветвь  y=310: A(180,310)──[R2]──B(370,310) // совпадает с нижней шиной
+                Вертикальные соединители: x=180: y=260..310 и x=370: y=260..310
+
+              Источник E: окружность в центре верхней шины, cx=300, cy=50, r=26
+              R1: прямоугольник 120×24 центр (275,260)
+              R2: прямоугольник 120×24 центр (275,310)
+              R3: прямоугольник 100×24 центр (115,310)
+
+              Все провода — строго горизонтальные или вертикальные.
+            -->
+            <svg width="600" height="420" viewBox="0 0 600 420">
+                <defs>
+                    <filter id="glow-s">
+                        <feGaussianBlur stdDeviation="3" result="b"/>
+                        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    <marker id="arr-I" viewBox="0 0 10 10" refX="9" refY="5"
+                            markerWidth="7" markerHeight="7" orient="auto">
+                        <path d="M0,1 L9,5 L0,9 Z" fill="#29b6f6"/>
+                    </marker>
+                </defs>
+
+                <!-- ══════════════════════════════════════════════════
+                     ПРОВОДА ВНЕШНЕГО КОНТУРА
+                     TL=(50,50)  TR=(550,50)  BR=(550,310)  BL=(50,310)
+                     ══════════════════════════════════════════════════ -->
+
+                <!-- Верхняя шина левая: TL(50,50) → лев.край E(274,50) -->
+                <line x1="50"  y1="50" x2="274" y2="50" stroke="#78909c" stroke-width="2.5"/>
+                <!-- Верхняя шина правая: прав.край E(326,50) → TR(550,50) -->
+                <line x1="326" y1="50" x2="550" y2="50" stroke="#78909c" stroke-width="2.5"/>
+                <!-- Правая стойка: TR(550,50) → BR(550,310) -->
+                <line x1="550" y1="50"  x2="550" y2="310" stroke="#78909c" stroke-width="2.5"/>
+                <!-- Нижняя шина правая: BR(550,310) → B(370,310) -->
+                <line x1="550" y1="310" x2="370" y2="310" stroke="#78909c" stroke-width="2.5"/>
+                <!-- Нижняя шина левая: A(180,310) → BL(50,310) — R3 лежит на этом отрезке -->
+                <!-- Провод слева от R3: BL(50,310) → лев.край R3(55,310) -->
+                <line x1="50"  y1="310" x2="55"  y2="310" stroke="#78909c" stroke-width="2.5"/>
+                <!-- Провод справа от R3: прав.край R3(175,310) → A(180,310) -->
+                <line x1="175" y1="310" x2="180" y2="310" stroke="#78909c" stroke-width="2.5"/>
+                <!-- Левая стойка: BL(50,310) → TL(50,50) -->
+                <line x1="50"  y1="310" x2="50"  y2="50"  stroke="#78909c" stroke-width="2.5"/>
+
+                <!-- ══════════════════════════════════════════════════
+                     ПАРАЛЛЕЛЬНЫЙ БЛОК
+                     Правый узел B = (370, 310)
+                     Левый узел  A = (180, 310)
+                     Верхняя ветвь R1 на y=255
+                     Нижняя ветвь  R2 на y=310 (совпадает с нижней шиной)
+                     ══════════════════════════════════════════════════ -->
+
+                <!-- Вертикальная стойка узла B: (370,255) → (370,310) -->
+                <line x1="370" y1="255" x2="370" y2="310" stroke="#78909c" stroke-width="2.5"/>
+                <!-- Вертикальная стойка узла A: (180,255) → (180,310) -->
+                <line x1="180" y1="255" x2="180" y2="310" stroke="#78909c" stroke-width="2.5"/>
+
+                <!-- Верхняя ветвь: провод A(180,255)→ лев.край R1(215,255) -->
+                <line x1="180" y1="255" x2="215" y2="255" stroke="#78909c" stroke-width="2.5"/>
+                <!-- Верхняя ветвь: провод прав.край R1(335,255) → B(370,255) -->
+                <line x1="335" y1="255" x2="370" y2="255" stroke="#78909c" stroke-width="2.5"/>
+
+                <!-- Нижняя ветвь: провод A(180,310) → лев.край R2(215,310) -->
+                <line x1="180" y1="310" x2="215" y2="310" stroke="#78909c" stroke-width="2.5"/>
+                <!-- Нижняя ветвь: провод прав.край R2(335,310) → B(370,310) -->
+                <line x1="335" y1="310" x2="370" y2="310" stroke="#78909c" stroke-width="2.5"/>
+
+                <!-- ══════════════════════════════════════════════════
+                     РЕЗИСТОРЫ (прямоугольники ГОСТ)
+                     R1: 120×24, центр (275,255)  → x=215..335, y=243..267
+                     R2: 120×24, центр (275,310)  → x=215..335, y=298..322
+                     R3: 120×24, центр (115,310)  → x=55..175,  y=298..322
+                     ══════════════════════════════════════════════════ -->
+
+                <!-- R1 -->
+                <rect x="215" y="243" width="120" height="24"
+                      fill="rgba(11,22,34,.95)" stroke="#00e5a0" stroke-width="2" rx="3"/>
+                <text x="275" y="260" fill="#00e5a0" font-size="13" font-family="monospace"
+                      font-weight="700" text-anchor="middle">R₁</text>
+
+                <!-- R2 -->
+                <rect x="215" y="298" width="120" height="24"
+                      fill="rgba(11,22,34,.95)" stroke="#00e5a0" stroke-width="2" rx="3"/>
+                <text x="275" y="315" fill="#00e5a0" font-size="13" font-family="monospace"
+                      font-weight="700" text-anchor="middle">R₂</text>
+
+                <!-- R3 -->
+                <rect x="55"  y="298" width="120" height="24"
+                      fill="rgba(11,22,34,.95)" stroke="#ffd740" stroke-width="2" rx="3"/>
+                <text x="115" y="315" fill="#ffd740" font-size="13" font-family="monospace"
+                      font-weight="700" text-anchor="middle">R₃</text>
+
+                <!-- ══════════════════════════════════════════════════
+                     ИСТОЧНИК ЭДС — центр верхней шины (300,50), r=26
+                     «+» справа (ток идёт вправо от «+»)
+                     «−» слева
+                     ══════════════════════════════════════════════════ -->
+                <circle cx="300" cy="50" r="26"
+                        fill="rgba(11,22,34,.95)" stroke="#ff9f43" stroke-width="2.2"
+                        filter="url(#glow-s)"/>
+                <!-- «+» внутри справа: длинная черта -->
+                <line x1="308" y1="50" x2="316" y2="50"
+                      stroke="#ff9f43" stroke-width="3" stroke-linecap="round"/>
+                <!-- «−» внутри слева: короткая черта -->
+                <line x1="284" y1="44" x2="284" y2="56"
+                      stroke="#ff9f43" stroke-width="2" stroke-linecap="round"/>
+                <!-- Знаки -->
+                <text x="291" y="47" fill="#ff9f43" font-size="11" font-weight="700"
+                      font-family="sans-serif">+</text>
+                <text x="271" y="47" fill="#ff9f43" font-size="11" font-weight="700"
+                      font-family="sans-serif">−</text>
+                <!-- Метка E -->
+                <text x="300" y="91" fill="#ff9f43" font-size="13" font-family="monospace"
+                      font-weight="700" text-anchor="middle">E</text>
+                <!-- Стрелка тока по верхней шине вправо -->
+                <line x1="360" y1="36" x2="470" y2="36"
+                      stroke="#29b6f6" stroke-width="1.5" stroke-dasharray="5,3"
+                      marker-end="url(#arr-I)"/>
+                <text x="400" y="30" fill="#29b6f6" font-size="11" font-family="monospace">I</text>
+
+                <!-- ══════════════════════════════════════════════════
+                     УГЛОВЫЕ И УЗЛОВЫЕ ТОЧКИ
+                     ══════════════════════════════════════════════════ -->
+                <circle cx="50"  cy="50"  r="4" fill="#78909c"/>
+                <circle cx="550" cy="50"  r="4" fill="#78909c"/>
+                <circle cx="550" cy="310" r="4" fill="#78909c"/>
+                <circle cx="50"  cy="310" r="4" fill="#78909c"/>
+                <!-- Узел B -->
+                <circle cx="370" cy="310" r="5" fill="#29b6f6" filter="url(#glow-s)"/>
+                <!-- Узел A -->
+                <circle cx="180" cy="310" r="5" fill="#29b6f6" filter="url(#glow-s)"/>
+
+                <!-- ══════════════════════════════════════════════════
+                     ПОЛЯ ВВОДА (foreignObject)
+                     Размещены строго снаружи своих элементов:
+                     E   — под окружностью источника
+                     R1  — над прямоугольником
+                     R2  — под прямоугольником
+                     R3  — над прямоугольником
+                     ══════════════════════════════════════════════════ -->
+
+                <!-- E: под окружностью источника -->
+                <foreignObject x="264" y="96" width="72" height="26">
+                    <body xmlns="http://www.w3.org/1999/xhtml">
+                    <input class="fo-input" id="fi-emf" type="number" step="any" placeholder="E, В"/>
+                    </body>
+                </foreignObject>
+
+                <!-- R1: над прямоугольником (y=243 − 30 = 213) -->
+                <foreignObject x="239" y="213" width="72" height="26">
+                    <body xmlns="http://www.w3.org/1999/xhtml">
+                    <input class="fo-input" id="fi-r1" type="number" step="any" placeholder="R₁, Ом"/>
+                    </body>
+                </foreignObject>
+
+                <!-- R2: под прямоугольником (y=322 + 4 = 326) -->
+                <foreignObject x="239" y="326" width="72" height="26">
+                    <body xmlns="http://www.w3.org/1999/xhtml">
+                    <input class="fo-input" id="fi-r2" type="number" step="any" placeholder="R₂, Ом"/>
+                    </body>
+                </foreignObject>
+
+                <!-- R3: над прямоугольником (y=298 − 30 = 268) -->
+                <foreignObject x="79"  y="268" width="72" height="26">
+                    <body xmlns="http://www.w3.org/1999/xhtml">
+                    <input class="fo-input" id="fi-r3" type="number" step="any" placeholder="R₃, Ом"/>
+                    </body>
+                </foreignObject>
+
+                <!-- ══════════════════════════════════════════════════
+                     ЖИВЫЕ РЕЗУЛЬТАТЫ — под схемой
+                     ══════════════════════════════════════════════════ -->
+                <!-- Левый блок -->
+                <text x="50"  y="365" fill="#546e7a" font-size="11" font-family="monospace">R_пар =</text>
+                <text id="svg2-rpar"   x="116" y="365" fill="#00e5a0" font-size="11" font-family="monospace" font-weight="700">?</text>
+                <text x="50"  y="381" fill="#546e7a" font-size="11" font-family="monospace">R_общ =</text>
+                <text id="svg2-rtotal" x="116" y="381" fill="#00e5a0" font-size="11" font-family="monospace" font-weight="700">?</text>
+                <text x="50"  y="397" fill="#546e7a" font-size="11" font-family="monospace">I_полн =</text>
+                <text id="svg2-itotal" x="122" y="397" fill="#ffd740" font-size="11" font-family="monospace" font-weight="700">?</text>
+                <!-- Правый блок -->
+                <text x="310" y="365" fill="#546e7a" font-size="11" font-family="monospace">U_пар =</text>
+                <text id="svg2-upar"  x="376" y="365" fill="#00e5a0" font-size="11" font-family="monospace" font-weight="700">?</text>
+                <text x="310" y="381" fill="#546e7a" font-size="11" font-family="monospace">U_R3  =</text>
+                <text id="svg2-u3"    x="376" y="381" fill="#ffd740" font-size="11" font-family="monospace" font-weight="700">?</text>
+                <text x="310" y="397" fill="#546e7a" font-size="11" font-family="monospace">I₁/I₂ =</text>
+                <text id="svg2-i12"   x="376" y="397" fill="#00e5a0" font-size="11" font-family="monospace" font-weight="700">?</text>
+
+            </svg>
+            <p class="diagram-hint">✎ Введи значения прямо на схеме или в поля ниже — результаты обновятся мгновенно</p>
+        </div>
+
+        <!-- ─── Форма ─── -->
+        <form method="post" th:action="@{/kirchhoff/calculate-second}" onsubmit="return prepareSecond()">
+            <input type="hidden" name="emf" id="h-emf"/>
+            <input type="hidden" name="r1"  id="h-r1"/>
+            <input type="hidden" name="r2"  id="h-r2"/>
+            <input type="hidden" name="r3"  id="h-r3"/>
+            <input type="hidden" name="deltaE" id="h-deltaE" data-default="0.1"/>
+            <input type="hidden" name="deltaR" id="h-deltaR" data-default="0.5"/>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>E — ЭДС источника (В)</label>
+                    <input type="number" id="tb-emf" step="any" placeholder="напр. 12"
+                           th:value="${kirchhoff != null and secondResult != null ? kirchhoff.emf : ''}"/>
+                </div>
+                <div class="form-group">
+                    <label>R₁ — ветвь 1 парал. блока (Ом)</label>
+                    <input type="number" id="tb-r1" step="any" placeholder="напр. 1000"
+                           th:value="${kirchhoff != null and secondResult != null ? kirchhoff.r1 : ''}"/>
+                </div>
+                <div class="form-group">
+                    <label>R₂ — ветвь 2 парал. блока (Ом)</label>
+                    <input type="number" id="tb-r2" step="any" placeholder="напр. 1000"
+                           th:value="${kirchhoff != null and secondResult != null ? kirchhoff.r2 : ''}"/>
+                </div>
+                <div class="form-group">
+                    <label>R₃ — последовательный резистор (Ом)</label>
+                    <input type="number" id="tb-r3" step="any" placeholder="напр. 1000"
+                           th:value="${kirchhoff != null and secondResult != null ? kirchhoff.r3 : ''}"/>
+                </div>
+            </div>
+
+            <div class="error-params">
+                <p class="error-params-title">⚙ Параметры погрешности прибора</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>ΔE — погрешность ЭДС (В)</label>
+                        <input type="number" id="tb-deltaE" step="any" value="0.1" placeholder="0.1"/>
+                    </div>
+                    <div class="form-group">
+                        <label>ΔR — погрешность сопротивления (Ом)</label>
+                        <input type="number" id="tb-deltaR" step="any" value="0.5" placeholder="0.5"/>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-calc">⚡ Рассчитать цепь и погрешности</button>
+        </form>
+
+        <!-- ─── Результат ─── -->
+        <div id="second-result-box" class="result-box"
+             th:if="${secondResult != null and secondResult}">
+            <div class="result-header">📊 Результат — II Закон Кирхгофа</div>
+            <div class="result-cols">
+
+                <div class="result-col">
+                    <p class="result-col-title">Расчёт цепи</p>
+                    <div class="result-row">
+                        <span class="result-label">ЭДС E</span>
+                        <span class="result-value" th:text="${kirchhoff.emf} + ' В'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">R_пар = R₁∥R₂</span>
+                        <span class="result-value"
+                              th:text="${#numbers.formatDecimal(kirchhoff.rPar,1,4)} + ' Ом'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">R_общ = R_пар + R₃</span>
+                        <span class="result-value"
+                              th:text="${#numbers.formatDecimal(kirchhoff.rTotal,1,4)} + ' Ом'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">I_полн = E / R_общ</span>
+                        <span class="result-value big"
+                              th:text="${#numbers.formatDecimal(kirchhoff.iTotal,1,6)} + ' А'"
+                              th:attr="data-val=${kirchhoff.iTotal},data-unit=' А'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">U_пар = I · R_пар</span>
+                        <span class="result-value"
+                              th:text="${#numbers.formatDecimal(kirchhoff.uPar,1,4)} + ' В'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">U_R3 = I · R₃</span>
+                        <span class="result-value"
+                              th:text="${#numbers.formatDecimal(kirchhoff.u3,1,4)} + ' В'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">I₁ = U_пар / R₁</span>
+                        <span class="result-value"
+                              th:text="${#numbers.formatDecimal(kirchhoff.i1,1,6)} + ' А'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">I₂ = U_пар / R₂</span>
+                        <span class="result-value"
+                              th:text="${#numbers.formatDecimal(kirchhoff.i2,1,6)} + ' А'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Проверка: E = U_пар + U_R3</span>
+                        <span class="badge ok"  th:if="${kirchhoff.secondValid}">✓ Выполнен</span>
+                        <span class="badge err" th:unless="${kirchhoff.secondValid}">✗ Ошибка</span>
+                    </div>
+                </div>
+
+                <div class="result-col">
+                    <p class="result-col-title">Погрешности (метод предельных)</p>
+                    <div class="result-row">
+                        <span class="result-label">ΔE / ΔR</span>
+                        <span class="result-value orange"
+                              th:text="${error.deltaE} + ' В / ' + ${error.deltaR} + ' Ом'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">ΔR_пар</span>
+                        <span class="result-value orange"
+                              th:text="'± ' + ${#numbers.formatDecimal(error.absErrorRPar,1,5)} + ' Ом'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">ΔR_общ</span>
+                        <span class="result-value orange"
+                              th:text="'± ' + ${#numbers.formatDecimal(error.absErrorRTotal,1,5)} + ' Ом'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">ΔI_полн / δI_полн</span>
+                        <span class="result-value orange"
+                              th:text="'± ' + ${#numbers.formatDecimal(error.absErrorITotal,1,6)} + ' А / '
+                        + ${#numbers.formatDecimal(error.relErrorITotal,1,2)} + ' %'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">ΔU_пар / δU_пар</span>
+                        <span class="result-value orange"
+                              th:text="'± ' + ${#numbers.formatDecimal(error.absErrorUPar,1,4)} + ' В / '
+                        + ${#numbers.formatDecimal(error.relErrorUPar,1,2)} + ' %'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">ΔU_R3 / δU_R3</span>
+                        <span class="result-value orange"
+                              th:text="'± ' + ${#numbers.formatDecimal(error.absErrorU3,1,4)} + ' В / '
+                        + ${#numbers.formatDecimal(error.relErrorU3,1,2)} + ' %'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">ΔI₁ / δI₁</span>
+                        <span class="result-value orange"
+                              th:text="'± ' + ${#numbers.formatDecimal(error.absErrorI1,1,6)} + ' А / '
+                        + ${#numbers.formatDecimal(error.relErrorI1,1,2)} + ' %'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">ΔI₂ / δI₂</span>
+                        <span class="result-value orange"
+                              th:text="'± ' + ${#numbers.formatDecimal(error.absErrorI2,1,6)} + ' А / '
+                        + ${#numbers.formatDecimal(error.relErrorI2,1,2)} + ' %'"></span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div><!-- /section-second -->
+
+
+    <!-- ╔══════════════════════════════════════════════════════════╗
+         ║  ТЕОРИЯ                                                   ║
+         ╚══════════════════════════════════════════════════════════╝ -->
+    <div id="section-theory" class="section-card">
+
+        <p class="card-title">📖 Теория законов Кирхгофа</p>
+
+        <div class="theory-block">
+            <h3>Первый закон Кирхгофа (закон токов)</h3>
+            <p>Алгебраическая сумма токов в узле равна нулю: <strong>ΣI = 0</strong>.</p>
+            <p>Токи, втекающие в узел, принимаются положительными, вытекающие — отрицательными.
+                Следствие: сколько тока входит — столько и выходит.</p>
+        </div>
+
+        <div class="theory-block">
+            <h3>Второй закон Кирхгофа (закон напряжений)</h3>
+            <p>В замкнутом контуре: <strong>ΣE = ΣI·R</strong>.</p>
+            <p><strong>Правило знаков для ЭДС:</strong> берётся «+», если при обходе контура
+                проходим через источник от «−» к «+» (стрелка ЭДС совпадает с обходом).</p>
+            <p><strong>Правило знаков для падений:</strong> берётся «+», если ток через резистор
+                совпадает с направлением обхода.</p>
+        </div>
+
+        <div class="theory-block">
+            <h3>Расчёт погрешностей</h3>
+            <p>Используется метод <strong>предельных абсолютных погрешностей</strong>:</p>
+            <p><strong>I закон:</strong> ΔI_вых = ΔI₁ + ΔI₂ + ΔI₃ = 3·ΔI_прибора</p>
+            <p><strong>II закон:</strong> ΔI_R3 вычисляется через частные производные функции
+                I_R3(E₁, E₂, R₁, R₂, R₃, I_R1, I_R2) по каждому аргументу.</p>
+            <p>Относительная погрешность: <strong>δ = (Δ / |значение|) × 100%</strong>.</p>
+        </div>
+
+        <div class="theory-block">
+            <h3>Составление системы уравнений</h3>
+            <p>Для цепи с <em>n</em> узлами и <em>m</em> ветвями составляют
+                <strong>(n−1)</strong> уравнений по I закону и
+                <strong>m−(n−1)</strong> уравнений по II закону.</p>
+        </div>
+
+    </div><!-- /section-theory -->
+
+</div><!-- /container -->
+
+<footer>
+    ⚡ Законы Кирхгофа · Spring Boot + Thymeleaf · IISIB24
+</footer>
+
+<script th:src="@{/kirchhoff/main.js}"></script>
+</body>
+</html>

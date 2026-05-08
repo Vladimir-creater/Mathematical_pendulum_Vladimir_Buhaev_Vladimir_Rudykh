@@ -63,6 +63,19 @@ const topics = [
           <path d="M8 22c2-4 6-4 8 0" stroke-dasharray="2 2"/>
         </svg>`,
     },
+    // ✅ Проект Кирхгофа: добавь этот объект в массив topics
+    {
+        id: 'kirchhoff',
+        title: 'Законы Кирхгофа',
+        description: 'Created by Васильев Матвей',
+        gradient: 'linear-gradient(135deg, #29b6f6, #00e5ff)',
+        glowColor: 'rgba(41,182,246,0.3)',
+        url: '/kirchhoff',
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2v20M2 12h20"/>
+        <circle cx="12" cy="12" r="3"/>
+    </svg>`,
+    },
 ];
 
 /* ── Render cards ── */
